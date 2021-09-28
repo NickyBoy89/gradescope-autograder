@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -8,11 +9,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/NickyBoy89/gradescope-autograder/diffmatchpatch"
 	"github.com/fatih/color"
 	log "github.com/sirupsen/logrus"
 )
+
+// The timeout after which a test will be considered "canceled"
+// defaults to one second
+const commandTimeout = time.Second * 1
 
 // Autograder
 
@@ -67,9 +73,19 @@ func main() {
 		if string(output) != string(testOutput) {
 			color.Red("FAILED")
 
-			diff := diffmatchpatch.New()
-			outputDifference := diff.DiffMain(string(output), string(testOutput), true)
-			fmt.Println(diff.DiffPrettyText(outputDifference))
+			if !*raw {
+				diff := diffmatchpatch.New()
+				outputDifference := diff.DiffMain(string(output), string(testOutput), true)
+				fmt.Println(diff.DiffPrettyText(outputDifference))
+			} else {
+				color.Blue("EXPECTED")
+				fmt.Println(string(testOutput))
+				color.Blue("ACTUAL")
+				fmt.Println(string(output))
+			}
+			if *stopFail {
+				break
+			}
 			continue
 		}
 		color.Green("PASSED")
@@ -143,7 +159,9 @@ func ChangeFileExtensionTo(path, ext string) string {
 }
 
 func TestFile(testFile, inputFile string) ([]byte, error) {
-	testCommand := exec.Command("python3", testFile)
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
+	defer cancel()
+	testCommand := exec.CommandContext(ctx, "python3", testFile)
 
 	if inputFile != "" {
 		in, err := os.Open(inputFile)

@@ -1149,17 +1149,28 @@ func (dmp *DiffMatchPatch) DiffPrettyText(diffs []Diff) string {
 	for _, diff := range diffs {
 		text := diff.Text
 
+		var replaceWhitespace bool
+
+		// If the diff only consists of whitespace characters
+		if strings.Trim(text, " \n") == "" {
+			replaceWhitespace = true
+		}
+
 		switch diff.Type {
 		case DiffInsert:
 			_, _ = buff.WriteString("\x1b[32m")
-			text = strings.ReplaceAll(text, " ", "█")
-			text = strings.ReplaceAll(text, "\n", "⏎")
+			if replaceWhitespace {
+				text = strings.ReplaceAll(text, " ", "█")
+				text = strings.ReplaceAll(text, "\n", "\n⏎")
+			}
 			_, _ = buff.WriteString(text)
 			_, _ = buff.WriteString("\x1b[0m")
 		case DiffDelete:
 			_, _ = buff.WriteString("\x1b[31m")
-			text = strings.ReplaceAll(text, " ", "█")
-			text = strings.ReplaceAll(text, "\n", "⏎")
+			if replaceWhitespace {
+				text = strings.ReplaceAll(text, " ", "█")
+				text = strings.ReplaceAll(text, "\n", "\n⏎")
+			}
 			_, _ = buff.WriteString(text)
 			_, _ = buff.WriteString("\x1b[0m")
 		case DiffEqual:
