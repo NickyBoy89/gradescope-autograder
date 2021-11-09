@@ -95,7 +95,7 @@ func main() {
 			log.Fatalf("Error opening output file %v: %v", ChangeFileExtensionTo(test, ".out"), err)
 		}
 
-		if !compareOutputs(string(output), string(testOutput), *raw) && *stopFail {
+		if !compareOutputs(string(testOutput), string(output), *raw) && *stopFail {
 			break
 		}
 	}
