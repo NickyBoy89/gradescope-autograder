@@ -40,6 +40,39 @@ func main() {
 		log.Warn("If this is not what you intended, set a target directory with the --targetDir flag")
 	}
 
+	// Collect all the python files in the original directory
+	originalFiles, err := filepath.Glob("*.py")
+	if err != nil {
+		absPath, err := filepath.Abs(".")
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Fatal("Could not get absolute path of current directory")
+		}
+		log.WithFields(log.Fields{
+			"directory": absPath,
+			"error":     err,
+		}).Fatal("Error searching for original files")
+	}
+
+	// Copy all the original python files to the target directory
+	for _, orig := range originalFiles {
+		originalFileData, err := os.ReadFile(orig)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"file":  fmt.Sprintf("%s/%s", *targetDirectory, orig),
+				"error": err,
+			}).Fatal("Error reading file")
+		}
+		err = os.WriteFile(fmt.Sprintf("%s/%s", *targetDirectory, orig), originalFileData, 0755)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"file":  fmt.Sprintf("%s/%s", *targetDirectory, orig),
+				"error": err,
+			}).Fatal("Error writing to file")
+		}
+	}
+
 	// Gather all the test files
 	testFiles, err := filepath.Glob(*targetDirectory + "/test-*.py")
 	if err != nil {
