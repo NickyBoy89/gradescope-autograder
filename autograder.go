@@ -147,7 +147,7 @@ func main() {
 			log.Fatalf("Error reading output file %v: %v", testOutput, err)
 		}
 
-		if !compareOutputs(string(commandOutput), string(outputData), *raw) && *stopFail {
+		if !compareOutputs(string(outputData), string(commandOutput), *raw) && *stopFail {
 			break
 		}
 	}
