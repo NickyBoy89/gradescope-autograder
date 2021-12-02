@@ -30,7 +30,6 @@ func main() {
 	mainFile := flag.String("main", "", "The python file to run the tests against, required for programs that test that file specifically")
 	targetDirectory := flag.String("targetDir", ".", "The directory to search for test files in, defaults to \".\" (the current directory)")
 	stopFail := flag.Bool("stopFail", false, "Stops the test after the first test failure. Useful with large test diffs")
-	verbose := flag.Bool("v", false, "Always prints the stdout of commands, instead of only on error")
 	raw := flag.Bool("raw", false, "Displays the raw output of both commands, instead of a diff")
 
 	flag.Parse()
@@ -88,6 +87,7 @@ func main() {
 		if err != nil {
 			color.Red("FAILED")
 			color.Red(err.Error())
+			fmt.Println(string(output))
 		}
 
 		testOutput, err := os.ReadFile(ChangeFileExtensionTo(test, ".out"))
@@ -132,10 +132,10 @@ func main() {
 		commandOutput, err := TestFile(*mainFile, testInput)
 		if err != nil {
 			color.Red("FAILED")
-			if *verbose {
-				fmt.Println(commandOutput)
-			}
+			// Print the error out
 			color.Red(err.Error())
+			// Print the stdout anyways
+			fmt.Println(string(commandOutput))
 			if *stopFail {
 				break
 			}
@@ -180,6 +180,9 @@ func ChangeFileExtensionTo(path, ext string) string {
 	return path[:len(path)-len(filepath.Ext(path))] + ext
 }
 
+// TestFile takes in a filename and its stdin file and runs the code
+// returning the stdout and/or any errors that happen along the way
+// if the command errors out, the error will return the stderr
 func TestFile(testFile, inputFile string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
 	defer cancel()
@@ -210,9 +213,6 @@ func TestFile(testFile, inputFile string) ([]byte, error) {
 	stdout, _ := io.ReadAll(testStdout)
 	stderr, _ := io.ReadAll(testStderr)
 
-	if len(stderr) != 0 {
-		return nil, errors.New(string(stderr))
-	}
-
-	return stdout, nil
+	// Return the stdout anyways, even if there is stderr
+	return stdout, errors.New(string(stderr))
 }
