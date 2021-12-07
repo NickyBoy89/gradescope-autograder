@@ -214,5 +214,8 @@ func TestFile(testFile, inputFile string) ([]byte, error) {
 	stderr, _ := io.ReadAll(testStderr)
 
 	// Return the stdout anyways, even if there is stderr
-	return stdout, errors.New(string(stderr))
+	if string(stderr) != "" {
+		return stdout, errors.New(string(stderr))
+	}
+	return stdout, nil
 }
